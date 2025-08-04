@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Garden BLE Config</title>
+</head>
+<body>
+<h2>Set Light Schedule</h2>
+<label>On Hour (0–23):</label>
+<input id="onHour" type="number" min="0" max="23"><br><br>
+<label>Off Hour (0–23):</label>
+<input id="offHour" type="number" min="0" max="23"><br><br>
+<button onclick="connect()">Connect & Send</button>
+
+<script>
+    const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+    const ON_UUID = "12345678-1234-1234-1234-1234567890ac";
+    const OFF_UUID = "12345678-1234-1234-1234-1234567890ad";
+
+    async function connect() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ namePrefix: 'GardenCtrl-C3' }],
+                optionalServices: [SERVICE_UUID]
+            });
+
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService(SERVICE_UUID);
+            const onChar = await service.getCharacteristic(ON_UUID);
+            const offChar = await service.getCharacteristic(OFF_UUID);
+
+            const on = parseInt(document.getElementById("onHour").value);
+            const off = parseInt(document.getElementById("offHour").value);
+
+            await onChar.writeValue(Uint8Array.of(on));
+            await offChar.writeValue(Uint8Array.of(off));
+
+            alert("Schedule updated!");
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        }
+    }
+</script>
+</body>
+</html>
